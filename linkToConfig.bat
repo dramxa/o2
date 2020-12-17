@@ -1,0 +1,1 @@
+mklink %~dp0\src\localConfig.js %~dp0\public\brand\standCode.js

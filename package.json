@@ -1,0 +1,40 @@
+{
+  "name": "o2ui",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build"
+  },
+  "dependencies": {
+    "axios": "^0.21.0",
+    "chart.js": "^2.9.4",
+    "colorsys": "^1.0.22",
+    "core-js": "^3.8.0",
+    "detect-browser": "^5.2.0",
+    "particles.vue": "^2.1.11",
+    "pug": "^3.0.0",
+    "pug-plain-loader": "^1.0.0",
+    "simplebar": "^5.3.0",
+    "stylus": "^0.54.8",
+    "stylus-loader": "^3.0.2",
+    "vue": "^2.6.12",
+    "vue-chartjs": "^3.5.1",
+    "vue-imask": "^6.0.5",
+    "vue-ls": "^3.2.1",
+    "vue-native-websocket": "^2.0.14",
+    "vue-router": "^3.4.9",
+    "vuebar": "0.0.20",
+    "vuetify": "^2.3.19",
+    "vuex": "^3.6.0"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "^4.5.9",
+    "@vue/cli-service": "^4.5.9",
+    "sass": "^1.29.0",
+    "sass-loader": "^10.1.0",
+    "vue-cli-plugin-vuetify": "^2.0.7",
+    "vue-template-compiler": "^2.6.12",
+    "vuetify-loader": "^1.6.0"
+  }
+}

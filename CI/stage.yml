@@ -1,0 +1,21 @@
+'stage':
+    extends: .deploy_script
+    stage: deploy
+    tags:
+      - o2
+    dependencies:
+      - 'build'
+    environment:
+      # Имя среды - используется как имя namespace в kubernetes
+      name: stage
+      url: https://stage1.o2.elasticcloud.ru
+    only: 
+      - /^stage_.*$/
+      #- branches
+      - master
+    variables:
+      KUBE_NAMESPACE: 'stage'  #
+      BRAND_PATH: 'stage'      # Брендирование интерфейса
+      KUBE_CONFIG: $STAGE_KUBE_CONFIG    # определение конфигурации подключения - индивидуальная для каждого разработчика и namespace
+    #when: manual
+    #allow_failure: false

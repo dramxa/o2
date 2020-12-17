@@ -1,0 +1,69 @@
+include:
+  - local: '/CI/dev-ag.yml'
+  - local: '/CI/dev-dk.yml'
+  - local: '/CI/dev-dp.yml'
+  - local: '/CI/dev-ik.yml'
+  - local: '/CI/dev-il.yml'
+  - local: '/CI/dev-ip.yml'
+  - local: '/CI/dev-iv.yml'
+  - local: '/CI/stage.yml'
+  - local: '/CI/prod-dp.yml'
+
+variables:
+  DOCKER_HOST: tcp://localhost:2375
+  DOCKER_DRIVER: overlay2
+  # шаблонизация
+  TEMPLATER: "import sys,jinja2,os; sys.stdout.write(jinja2.Template(sys.stdin.read()).render(env=os.environ))"
+  O2_CONSUL: "http://hash1.o2.elasticcloud.ru:8500;http://hash2.o2.elasticcloud.ru:8500;http://hash3.o2.elasticcloud.ru:8500"
+
+services:
+  - docker:18-dind
+#  это фикс баги: докер образ пересобрали, а образ гитлаб-раннеров еще не успели, поэтому используется предыдущая версия образа докера
+# https://forum.gitlab.com/t/gitlab-shared-runner-can-not-connect-to-docker-daemon-and-leaks-secrets/28298/3
+
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
+  tags: 
+    - o2
+  image: docker:stable
+  variables:
+    DOCKER_HOST: tcp://localhost:2375
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""      # https://gitlab.com/gitlab-org/gitlab-ce/issues/64959
+  before_script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+  script:
+    - docker build -t $CI_REGISTRY/o2/$CI_PROJECT_NAME:$CI_COMMIT_REF_SLUG -f UI.Dockerfile . 
+    - docker push $CI_REGISTRY/o2/$CI_PROJECT_NAME:$CI_COMMIT_REF_SLUG
+  after_script:
+    - docker logout ${CI_REGISTRY}
+
+.deploy_script:
+  #image: bitnami/kubectl
+  # Кастомный образ из python:alpine с модулем jinja2 и kubectl, билдится и пушится тут: https://gitlab.o2.elasticcloud.ru/bofh666/deployer
+  image: $CI_REGISTRY/bofh666/deployer:latest
+  script:
+    - mkdir ${HOME}/.kube; echo $KUBE_CONFIG | base64 -d > ${HOME}/.kube/config
+    #- kubectl config set-context --current --namespace=$KUBE_NAMESPACE
+    - echo $KUBECONFIG
+    #- cat $KUBECONFIG
+    - echo $KUBE_NAMESPACE
+    # Развертывание 
+    # Парсим шаблон и подставляем KUBE_NAMESPACE в имя хоста, как запрошено в https://gitlab.o2.elasticcloud.ru/devops/devops/issues/36
+    - cat MANIFESTS/ui-frontend-deployment.yaml.j2 | python -c "$TEMPLATER" > MANIFESTS/ui-frontend-deployment.yaml
+    - kubectl delete deployment ui-frontend-deployment --ignore-not-found=true
+    - kubectl apply -f MANIFESTS/ui-frontend-deployment.yaml -n $KUBE_NAMESPACE
+    - kubectl set image deployment/ui-frontend-deployment -n $KUBE_NAMESPACE ui-frontend=$CI_REGISTRY/o2/frontend:$CI_COMMIT_REF_SLUG
+    - kubectl set env deployment/ui-frontend-deployment -n $KUBE_NAMESPACE O2_CONSUL="http://hash1.o2.elasticcloud.ru:8500;http://hash2.o2.elasticcloud.ru:8500;http://hash3.o2.elasticcloud.ru:8500" O2_ENVIRONMENT=$KUBE_NAMESPACE O2_SERVICE=ui-frontend
+    - kubectl describe deployment ui-frontend-deployment -n $KUBE_NAMESPACE
+    # Проверяем, что деплой прошел нормально, иначе аварийно останавливаемся для дальнейшего разбирательства
+    - kubectl rollout status deployment ui-frontend-deployment --timeout=3m -n $KUBE_NAMESPACE
+    - kubectl describe deployment ui-frontend-deployment -n $KUBE_NAMESPACE
+    # Применение сервис локатора
+    - kubectl apply -f MANIFESTS/ui-frontend-service.yaml -n $KUBE_NAMESPACE
+    # Описание сервиса локатора  
+    - kubectl describe service ui-frontend-service -n $KUBE_NAMESPACE

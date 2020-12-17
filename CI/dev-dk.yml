@@ -1,0 +1,22 @@
+'dev-dk all':
+    extends: .deploy_script
+    stage: deploy
+    tags: 
+      - o2
+    dependencies:
+      - 'build'
+    environment:
+      # Имя среды - используется как имя namespace в kubernetes
+      name: dev-dk
+      url: https://dev-dk.o2.elasticcloud.ru
+      #on_stop: 'dev-dk all stop'
+    only: 
+      - /^dev-dk_.*$/
+      - master
+    variables:
+      KUBE_NAMESPACE: 'dev-dk' 
+      BRAND_PATH: 'dev'      # Брендирование интерфейса
+      KUBE_CONFIG: $DEVDK_KUBE_CONFIG    # определение конфигурации подключения - индивидуальная для каждого разработчика и namespace
+    #when: manual
+    #allow_failure: false
+  

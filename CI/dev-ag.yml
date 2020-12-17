@@ -1,0 +1,22 @@
+'dev-ag all':
+    extends: .deploy_script
+    stage: deploy
+    tags: 
+      - o2
+    dependencies:
+      - 'build'
+    environment:
+      # Имя среды - используется как имя namespace в kubernetes
+      name: dev-ag 
+      url: https://dev-ag.o2.elasticcloud.ru
+      #on_stop: 'dev-dk all stop'
+    only: 
+      - /^dev-ag_.*$/
+      - master
+    variables:
+      KUBE_NAMESPACE: 'dev-ag'  # 
+      BRAND_PATH: 'dev'      # Брендирование интерфейса
+      KUBE_CONFIG: $DEVAG_KUBE_CONFIG    # определение конфигурации подключения - индивидуальная для каждого разработчика и namespace
+    #hen: manual
+    #allow_failure: false
+  

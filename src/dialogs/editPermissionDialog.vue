@@ -1,0 +1,237 @@
+<template>
+    <d-dialog-basic :dialogId="id" width="90%" maxWidth="1200px" height>
+        <v-card class="d-edit-permission pa-6 white-light">
+            <v-layout>
+                <v-flex>
+                    <v-card-text class="fs-l pa-0 grey700"> 
+                        <v-layout>
+                            <v-flex class="pl-6">
+                                Edit permission in role <span class="blue700 fw-b">{{ role }}</span>
+                            </v-flex>
+                            <v-flex class="d-edit-permission__close-btn-wrapper">
+                                <v-btn icon tile text width="36" height="36" class="d-edit-permission__close-btn br-4" @click="cancelClick">
+                                    <i class="grey500-i icon-Close icon-24"></i>
+                                </v-btn>
+                            </v-flex>
+                        </v-layout>
+                        <v-layout class="pt-4 pl-6">
+                            <input type="text" placeholder="Search" class="d-edit-permission__search-input border grey300-border px-2 py-1 br-2 fw-b fs-s">
+                        </v-layout>
+                        <v-layout class="mt-4">
+                            <v-data-table
+                                :headers="headers"
+                                :items  ="permissions"
+                                item-key="code"
+                                show-select
+                                disable-pagination
+                                hide-default-header
+                                hide-default-footer
+                                class="edit-perm-dialog-table"
+                                style="width:100%;"
+                                fixed-header
+                                group-by="groupName"
+                                show-group-by
+                                v-bar
+                                > 
+                                <template v-slot:header="data">
+                                    <thead class="border-bottom blue050-border">
+                                    <tr>
+                                    <template v-for="header in data.props.headers">
+                                    <th :key="header.value" class="table-header-text pa-2 fw-n">
+                                        <div v-if="header.value != 'data-table-select'">
+                                        <div class="pointer d-flex align-center">
+                                            <span class="fs-s grey600 nonselect">{{header.text}}</span>
+                                        </div>
+                                        </div>
+                                        <div v-else >
+                                            <c-table-checkbox 
+                                            logging="true"  
+                                            class="ml-2 d-flex align-center justify-space-around mt-0"  
+                                            cbid="net-table-header-cb"
+                                            @click="selectAll"
+                                            />
+                                        </div>
+                                    </th>
+                                    </template>
+                                    </tr>
+                                    </thead>
+
+                                </template>
+                                <template v-slot:group="data">
+                                    <tr class="v-row-group__header pointer border-bottom grey100-border" :fake="addGroup(data)" @click="selectGroup(data)">
+                                        <td colspan="3">
+                                        <v-layout class="white-light">
+                                            <c-table-checkbox 
+                                                logging="true"  
+                                                class="mr-3 d-flex pl-0 pt-2 align-center justify-space-around mt-0"  
+                                                cbid="perm-table-header-cb"                                                
+                                                :state="groups[data.group].isSelected"
+                                                :indeterminate="groups[data.group].indeterminate"
+                                                @click="selectGroup(data)"
+                                                />
+                                            <div class="fs-ml fw-b blue700 nonselect">{{data.group}}</div>
+                                        </v-layout>
+                                        </td>
+                                    </tr>
+                                    <tr class="row-with-hidden-menu border-bottom grey100-border pointer" v-for="item in data.items" :key="item.code" @click="selectItem(item, data)">
+                                    <template v-for="(header, index) in data.headers">
+                                    <td :key="index" v-if="index==0"  >
+                                        <div>
+                                        <c-table-checkbox cbid="perm-table-row" :state="item.isSelected" @click="selectItem(item, data)" style="margin-left: 32px;"/>
+                                        </div>
+                                    </td>
+                                    <td v-else :key="index" >
+                                        <!-- name -->
+                                        <div v-if="header.value=='name'">
+                                        <span class="grey900 fs-m">{{item.name}}</span>
+                                        </div>
+
+                                        <!-- description -->
+                                        <div v-if="header.value=='description'">
+                                        <span class="grey900 fs-m">{{item.description}}</span>
+                                        </div>
+                                    </td>
+                                    </template>
+                                    </tr>
+                                </template>
+                            </v-data-table>
+                        </v-layout>
+                    </v-card-text>
+                    <v-card-actions class="d-edit-permission__footer pa-0 mt-6">
+                        <v-spacer/>
+                        <v-btn class="normal-text white-light fs-ml elevation-0  blue900" small width="80" height="32" @click="cancelClick"> Cancel</v-btn>
+                        <v-btn class="white--text blue700-b normal-text fs-ml elevation-0" small width="80" height="32" @click="clickYes"> Yes</v-btn>
+                    </v-card-actions>
+                </v-flex>
+            </v-layout>
+        </v-card>
+    </d-dialog-basic>
+</template>
+
+<script>
+import { mapGetters, mapActions } from 'vuex';
+import Vue from 'vue'
+import dialogMixin from '@/dialogs/windows/windowMixin'
+import perms from '@/plugins/security/permConst'
+
+
+const component = Vue.extend({
+
+    mixins: [ dialogMixin ],
+    props: ['role'],
+
+    data(){
+        return{
+            sortBy     : "name",
+            descending : false,
+            permissions: [],
+            groups: {},
+            headers: [
+                { text: 'NAME'       , value: 'name'       , width: '200px' },
+                { text: 'DESCRIPTION', value: 'description', width: 'auto' },
+            ]
+        }
+    },
+
+    computed:{
+
+
+    },
+
+    watch:{
+        value: function(state){
+            this.showDialog = value;
+        },
+
+        showDialog: function(state){
+            if(!state)
+                this.$emit('onClose', this.result);
+        }
+    },
+
+
+    methods:{
+        addGroup(item){
+            if(isNullOrUndefined(this.groups[item.group])){
+                Vue.set(item, 'isSelected', false)
+                Vue.set(item, 'indeterminate', false)
+
+                this.groups[item.group] = item;
+            }
+        },
+
+        clickYes(){
+            let selectedPermissionsCodes = [];
+            this.permissions.filter(f=>f.isSelected).forEach(p=>selectedPermissionsCodes.push(p.code))
+            console.log(selectedPermissionsCodes);
+            this.acceptClick(
+                    // массив permissionCodes
+                    selectedPermissionsCodes
+                )         
+        },
+
+        selectAll(state){
+            Object.values(this.groups).forEach(group=>{
+                group.isSelected = state;
+                group.indeterminate = false;
+                group.items.forEach(item=>{
+                    item.isSelected = state;
+                })
+            })
+        },
+
+        selectItem(item, data){
+            item.isSelected = !item.isSelected;
+            var group = this.groups[data.group]
+            group.isSelected = group.items.filter(f=>!f.isSelected).length == 0;
+            group.indeterminate = group.items.filter(f=>f.isSelected).length > 0 && !group.isSelected;
+        },
+
+        selectGroup(item){
+            var selected = !this.groups[item.group].isSelected;
+            this.groups[item.group].isSelected = selected;
+
+            item.items.forEach(i => {
+                i.isSelected = selected;
+            });
+        }
+        
+    },
+
+    mounted(){
+        this.showDialog = this.value;
+        this.permissions = clone(perms)
+        this.permissions.forEach(t=>{ Vue.set(t, 'isSelected', false) });
+        new SimpleBar(qs(".edit-perm-dialog-table .v-data-table__wrapper"), { autoHide: true });
+    }
+
+})
+
+export function register(){
+    Vue.prototype.$windows.registerDialog({ dialogCode: 'editPermissionDialog', component});
+}
+
+export default component
+</script>
+
+<style lang="stylus" scoped>
+.d-edit-permission
+    border-radius: 0 !important
+    overflow: hidden
+    &__close-btn-wrapper
+        max-width: 36px
+    &__close-btn
+        margin-top: -6px
+        margin-right: -6px
+    &__search-input
+        width: 200px
+        height: 24px
+        transition: all 0.5s
+    &__footer
+        position sticky
+        bottom 0
+</style>
+<style>
+.edit-perm-dialog-table .v-data-table__wrapper{max-height:calc(100vh - 64px - 48px - 66px - 16px - 56px);}
+.v-dialog:not(.v-dialog--fullscreen){max-height:90% !important;overflow: hidden;}
+</style>

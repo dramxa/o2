@@ -1,0 +1,22 @@
+'dev-ip all':
+    extends: .deploy_script
+    stage: deploy
+    tags: 
+      - o2
+    dependencies:
+      - 'build'
+    environment:
+      # Имя среды - используется как имя namespace в kubernetes
+      name: dev-ip 
+      url: https://dev-ip.o2.elasticcloud.ru
+      #on_stop: 'dev-ip all stop'
+    only: 
+      - /^dev-ip_.*$/
+      - master
+    variables:
+      KUBE_NAMESPACE: 'dev-ip'  # not working ???
+      BRAND_PATH: 'dev'      # Брендирование интерфейса
+      KUBE_CONFIG: $DEVIP_KUBE_CONFIG    # определение конфигурации подключения - индивидуальная для каждого разработчика и namespace
+    #when: manual
+    #allow_failure: false
+  

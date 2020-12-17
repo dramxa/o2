@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ui-frontend-service
+  # где будет выполнено развертывание
+  #namespace: dev-dp
+spec:
+  selector:
+    app: ui-frontend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80

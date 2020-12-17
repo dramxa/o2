@@ -1,0 +1,23 @@
+'prod-dp all':
+    extends: .deploy_script
+    stage: deploy
+    tags:
+      - o2
+    dependencies:
+      - 'build'
+    environment:
+      # Имя среды - используется как имя namespace в kubernetes
+      name: prod-dp
+      url: https://o2.d-platforms.ru
+    only: 
+      - /^prod-dp_.*$/
+      - tags
+    variables:
+      KUBE_NAMESPACE: 'prod-dp'
+      BRAND_PATH: 'prod-dp'      # Брендирование интерфейса
+      KUBE_CONFIG: $PRODDP_KUBE_CONFIG    # определение конфигурации подключения - индивидуальная для каждого разработчика и namespace
+      O2_CONSUL: "http://consul1.d-platforms.ru:8500;http://consul2.d-platforms.ru:8500;http://consul3.d-platforms.ru:8500"
+      O2_ELK: "http://elastic1.d-platforms.ru:9200;http://elastic2.d-platforms.ru:9200;http://elastic3.d-platforms.ru:9200"
+      CONFIG_SRV: "http://consul1.d-platforms.ru:8500"
+    when: manual
+    #allow_failure: false

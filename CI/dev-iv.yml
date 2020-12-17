@@ -1,0 +1,20 @@
+'dev-iv all':
+    extends: .deploy_script
+    stage: deploy
+    tags: 
+      - o2
+    dependencies:
+      - 'build'
+    environment:
+      # Имя среды - используется как имя namespace в kubernetes
+      name: dev-iv
+      url: https://dev-iv.o2.elasticcloud.ru
+    only: 
+      - /^dev-iv_.*$/
+      - master
+    variables:
+      KUBE_NAMESPACE: 'dev-iv'  
+      BRAND_PATH: 'dev'      # Брендирование интерфейса
+      KUBE_CONFIG: $DEVIV_KUBE_CONFIG    # определение конфигурации подключения - индивидуальная для каждого разработчика и namespace
+    #when: manual
+    #allow_failure: false

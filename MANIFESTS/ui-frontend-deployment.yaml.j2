@@ -1,0 +1,29 @@
+# развертывание
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ui-frontend-deployment
+  #namespace: dev-dp
+spec:
+  selector:
+    matchLabels:
+      app: ui-frontend
+  replicas: 1
+  template:
+    metadata:
+      #namespace: dev-dp
+      labels:
+        app: ui-frontend
+    spec:
+      imagePullSecrets:
+      - name: gitlab
+      containers:
+      - name: ui-frontend
+        image: gitlab.o2.elasticcloud.ru:4567/o2/frontend:{{ env['CI_COMMIT_REF_SLUG'] }}
+        imagePullPolicy: "Always"
+        ports:
+        - containerPort: 80
+        env:
+          - name: BRAND_PATH
+            value: {{ env['BRAND_PATH'] }}
+        

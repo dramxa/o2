@@ -1,0 +1,22 @@
+'dev-dp all':
+    extends: .deploy_script
+    stage: deploy
+    tags: 
+      - o2
+    dependencies:
+      - 'build'
+    environment:
+      # Имя среды - используется как имя namespace в kubernetes
+      name: dev-dp
+      url: https://dev-dp.o2.elasticcloud.ru
+      #on_stop: 'dev-dp all stop'
+    only: 
+      - /^dev-dp_.*$/
+      - master
+    variables:
+      KUBE_NAMESPACE: 'dev-dp'  # not working ???
+      BRAND_PATH: 'dev'      # Брендирование интерфейса
+      KUBE_CONFIG: $DEVDP_KUBE_CONFIG    # определение конфигурации подключения - индивидуальная для каждого разработчика и namespace
+    #when: manual
+    #allow_failure: false
+  
