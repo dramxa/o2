@@ -1,0 +1,3 @@
+globalThis.stand = {
+    code  : 'stage'
+}
