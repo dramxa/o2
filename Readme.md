@@ -1,3 +1,9 @@
+# PLATFORM GUIDE
+![](guide.gif)
+
+# SWITCH THEME
+![](switchtheme.gif)
+
 # o2ui
 
 ## Project setup
