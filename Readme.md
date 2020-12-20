@@ -1,3 +1,6 @@
+## Демо версия без бэка
+https://o2virtualcomputing.web.app/
+
 # PLATFORM GUIDE
 ![](guide.gif)
 
